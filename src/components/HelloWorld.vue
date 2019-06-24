@@ -69,7 +69,7 @@
             size="small"
             @click="deploy(name)"
             style="margin-top: 10px"
-          >deploy #{{item.nextBuildNumber}}</el-button>
+          >build #{{item.nextBuildNumber}}</el-button>
         </el-card>
       </el-col>
     </el-row>
@@ -133,7 +133,7 @@ export default {
     deploy(name) {
       axios
         .post(
-          "/api/job/" + name + "/buildWithParameters",
+          "/jenkinsapi/job/" + name + "/buildWithParameters",
           '{"parameter":[{"name":"branch","value":"test"}]',
           {
             auth: {
@@ -164,7 +164,7 @@ export default {
     },
     search(keyword, cb) {
       axios
-        .get("/api/search/suggest?query=" + keyword, {
+        .get("/jenkinsapi/search/suggest?query=" + keyword, {
           auth: {
             username: this.jenkins.user,
             password: this.jenkins.pwd
@@ -235,7 +235,7 @@ export default {
           continue;
         }
         requests.push(
-          axios.get("/api/job/" + name + "/api/json", {
+          axios.get("/jenkinsapi/job/" + name + "/api/json", {
             auth: {
               username: this.jenkins.user,
               password: this.jenkins.pwd

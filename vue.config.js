@@ -5,12 +5,12 @@ module.exports = {
     // baseUrl: '/',
     devServer: {
         proxy: {
-            '/api': {
+            '/jenkinsapi': {
                 target: 'http://testjenkins.wb-intra.com/',
                 changeOrigin: true,
                 ws: true,
                 pathRewrite: {
-                    '^/api': ''
+                    '^/jenkinsapi': ''
                 }
             }
         }
