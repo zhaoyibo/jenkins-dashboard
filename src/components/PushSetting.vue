@@ -32,9 +32,6 @@
         </p>
       </el-col>
       <el-col :span="6">
-        <p>
-          <b>app 设置</b>
-        </p>
         <p
           v-for="(item, i) in settings.setting"
           :key="i"
