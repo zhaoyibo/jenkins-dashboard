@@ -1,5 +1,6 @@
 <template>
-  <div class="hello">
+  <div class="main">
+    <el-divider>Jenkins</el-divider>
     <el-row :gutter="12">
       <el-form :inline="true" label-width="40px" :model="jenkins" size="mini">
         <el-form-item label="地址">
@@ -78,7 +79,6 @@
 
 <script>
 import axios from "axios";
-import { setTimeout } from "timers";
 export default {
   name: "HelloWorld",
   data() {
@@ -125,7 +125,7 @@ export default {
           label: "60s"
         }
       ],
-      refresh: "10",
+      refresh: "0",
       auto: false
     };
   },
@@ -145,9 +145,7 @@ export default {
             }
           }
         )
-        .then(response => {
-          console.log(response);
-
+        .then(() => {
           this.load();
           this.$message({
             message: name + "开始部署",
@@ -206,7 +204,6 @@ export default {
       // this.load();
     },
     handleChange(value) {
-      console.log(value, this.refresh);
       if (value > 0) {
         if (!this.auto) {
           this.auto = true;
@@ -246,7 +243,6 @@ export default {
 
       let that = this;
       Promise.all(requests).then(function(values) {
-        console.log(values, new Date());
         for (const value of values) {
           let info = {};
           switch (value.data.color) {
@@ -271,7 +267,7 @@ export default {
           a[value.data.name] = info;
           that.$set(that.infos, value.data.name, info);
         }
-        console.log(interval, that.refresh);
+
         if (interval && that.refresh > 0) {
           that.auto = true;
           setTimeout(function() {
@@ -289,7 +285,6 @@ export default {
     if (this.jenkins.user && this.jenkins.pwd) {
       this.load(true);
     }
-    console.log(this);
   }
 };
 </script>

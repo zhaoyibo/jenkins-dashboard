@@ -1,16 +1,19 @@
 <template>
   <div id="app">
-    <HelloWorld/>
+    <Jenkins/>
+    <PushSetting/>
   </div>
 </template>
 
 <script>
-import HelloWorld from "./components/HelloWorld.vue";
+import Jenkins from "./components/Jenkins.vue";
+import PushSetting from "./components/PushSetting.vue";
 
 export default {
   name: "app",
   components: {
-    HelloWorld
+    Jenkins,
+    PushSetting
   }
 };
 </script>
