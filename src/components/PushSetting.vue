@@ -16,19 +16,19 @@
         </p>
         <p>
           <b>APP ID:</b>
-          {{settings.token.appId + ' ' + platfrom(settings.token.appId)}}
+          {{settings.token && (settings.token.appId + ' ' + platfrom(settings.token.appId))}}
         </p>
         <p>
           <b>推送平台:</b>
-          {{pushProviderConfig[settings.token.platformCode]}}
+          {{settings.token && pushProviderConfig[settings.token.platformCode]}}
         </p>
         <p>
           <b>创建时间:</b>
-          {{settings.token.create_time}}
+          {{settings.token && settings.token.create_time}}
         </p>
         <p>
           <b>修改时间:</b>
-          {{settings.token.update_time}}
+          {{settings.token && settings.token.update_time}}
         </p>
       </el-col>
       <!-- app 内设置 -->
@@ -43,7 +43,7 @@
       <el-col :span="12" :offset="6">
         <p>
           <b>TOKEN:</b>
-          {{settings.token.token}}
+          {{settings.token && settings.token.token}}
         </p>
       </el-col>
     </el-row>
@@ -56,7 +56,7 @@ export default {
   name: "PushSetting",
   data() {
     return {
-      uid: "",
+      uid: "562819515",
       pushProviderConfig: {
         "50": "苹果",
         "1": "小米",

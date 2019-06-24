@@ -1,6 +1,7 @@
 <template>
   <div class="main">
     <el-divider>Jenkins Dashboard</el-divider>
+    <!-- 账号密码 -->
     <el-row :gutter="12">
       <el-form :inline="true" label-width="40px" :model="jenkins" size="mini">
         <el-form-item label="地址">
@@ -17,6 +18,7 @@
         </el-form-item>
       </el-form>
     </el-row>
+    <!-- 搜索&刷新 -->
     <el-row :gutter="12">
       <el-form :inline="true" label-width="80px" :model="jenkins" size="mini">
         <el-form-item label>
@@ -40,6 +42,24 @@
         </el-form-item>
       </el-form>
     </el-row>
+    <!-- 排队的 -->
+    <el-row :gutter="12">
+      <div
+        v-if="buildQueue.length>0"
+        style="text-align: left;font-size: 12px;margin-left: 12px;color: gray;"
+      >
+        Build Queue
+        <el-tag
+          v-for="(item, i) in buildQueue"
+          :key="i"
+          type="info"
+          effect="plain"
+          style="margin-right: 5px;"
+          size="mini"
+        >{{ item }}</el-tag>
+      </div>
+    </el-row>
+    <!-- build 面板 -->
     <el-row :gutter="12">
       <el-col v-for="(item, name) in infos" :key="name" :span="6">
         <el-card shadow="hover">
@@ -79,6 +99,7 @@
 
 <script>
 import axios from "axios";
+import { setTimeout } from "timers";
 export default {
   name: "HelloWorld",
   data() {
@@ -126,7 +147,8 @@ export default {
         }
       ],
       refresh: "0",
-      auto: false
+      auto: false,
+      buildQueue: []
     };
   },
   methods: {
@@ -146,11 +168,12 @@ export default {
           }
         )
         .then(() => {
-          this.load();
           this.$message({
             message: name + "开始部署",
             type: "success"
           });
+
+          setTimeout(this.load, 500);
         });
     },
     submit() {
@@ -222,6 +245,21 @@ export default {
       return arr;
     },
     load(interval) {
+      axios
+        .get("/jenkinsapi/queue/api/json", {
+          auth: {
+            username: this.jenkins.user,
+            password: this.jenkins.pwd
+          }
+        })
+        .then(resp => {
+          var tmp = [];
+          for (let item of resp.data.items) {
+            tmp.push(item.task.name);
+          }
+          this.buildQueue = tmp;
+        });
+
       var names = this.list();
 
       var a = [];
