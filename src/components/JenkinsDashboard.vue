@@ -1,6 +1,6 @@
 <template>
   <div class="main">
-    <el-divider>Jenkins</el-divider>
+    <el-divider>Jenkins Dashboard</el-divider>
     <el-row :gutter="12">
       <el-form :inline="true" label-width="40px" :model="jenkins" size="mini">
         <el-form-item label="地址">
