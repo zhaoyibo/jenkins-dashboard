@@ -6,11 +6,11 @@ module.exports = {
     devServer: {
         proxy: {
             '/jenkinsapi': {
-                target: 'http://testjenkins.wb-intra.com/',
+                target: 'http://testjenkins.wb-intra.com',
                 changeOrigin: true,
                 ws: true,
                 pathRewrite: {
-                    '^/jenkinsapi': ''
+                    '^/jenkinsapi': '/'
                 }
             }
         }

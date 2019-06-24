@@ -84,7 +84,7 @@ export default {
   data() {
     return {
       jenkins: {
-        url: "http://testjenkins.wb-intra.com/",
+        url: "http://testjenkins.wb-intra.com",
         user: "",
         pwd: ""
       },
