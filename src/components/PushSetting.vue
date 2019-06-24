@@ -16,7 +16,7 @@
         </p>
         <p>
           <b>APP ID:</b>
-          {{settings.token.appId}}
+          {{settings.token.appId + ' ' + platfrom(settings.token.appId)}}
         </p>
         <p>
           <b>推送平台:</b>
@@ -88,6 +88,14 @@ export default {
   },
   methods: {
     fetch() {
+      if (
+        !this.uid ||
+        !isNaN(this.uid) ||
+        (this.uid.length != 8 && this.uid.length != 9)
+      ) {
+        this.$message.error("uid 输入有误");
+        return;
+      }
       axios
         .get(
           "http://testmanager.wb-intra.com/push-manager/setting/user?uid=" +
@@ -96,6 +104,21 @@ export default {
         .then(resp => {
           this.settings = resp.data.data;
         });
+    },
+    platfrom(appId) {
+      if (appId == 10001 || appId == 10000) {
+        return "iOS";
+      }
+      if (appId == 10002) {
+        return "Android";
+      }
+      if (appId.startsWith("2")) {
+        return "Android";
+      }
+      if (appId.startsWith("3")) {
+        return "iOS";
+      }
+      return "";
     }
   }
 };
