@@ -90,7 +90,7 @@ export default {
     fetch() {
       if (
         !this.uid ||
-        !isNaN(this.uid) ||
+        isNaN(this.uid) ||
         (this.uid.length != 8 && this.uid.length != 9)
       ) {
         this.$message.error("uid 输入有误");
