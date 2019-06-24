@@ -15,11 +15,11 @@
           {{settings.system === 1 ? "关闭" : (settings.system === 2 ? "开启" : "")}}
         </p>
         <p>
-          <b>appId:</b>
+          <b>APP ID:</b>
           {{settings.token.appId}}
         </p>
         <p>
-          <b>Push 平台:</b>
+          <b>推送平台:</b>
           {{pushProviderConfig[settings.token.platformCode]}}
         </p>
         <p>
@@ -31,17 +31,18 @@
           {{settings.token.update_time}}
         </p>
       </el-col>
+      <!-- app 内设置 -->
       <el-col :span="6">
-        <p
-          v-for="(item, i) in settings.setting"
-          :key="i"
-        >{{appSettingConfig[item.type]}}: {{item.status ? "打开":"关闭"}}</p>
+        <p v-for="(item, i) in settings.setting" :key="i">
+          <b>{{appSettingConfig[item.type]}}:</b>
+          {{item.status ? "打开":"关闭"}}
+        </p>
       </el-col>
     </el-row>
     <el-row :gutter="12">
       <el-col :span="12" :offset="6">
         <p>
-          <b>token:</b>
+          <b>TOKEN:</b>
           {{settings.token.token}}
         </p>
       </el-col>
