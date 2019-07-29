@@ -98,7 +98,6 @@
 </template>
 
 <script>
-import axios from "axios";
 import { setTimeout } from "timers";
 export default {
   name: "HelloWorld",
@@ -153,7 +152,7 @@ export default {
   },
   methods: {
     deploy(name) {
-      axios
+      this.axios
         .post(
           "/jenkinsapi/job/" + name + "/buildWithParameters",
           '{"parameter":[{"name":"branch","value":"test"}]',
@@ -184,7 +183,7 @@ export default {
       }
     },
     search(keyword, cb) {
-      axios
+      this.axios
         .get("/jenkinsapi/search/suggest?query=" + keyword, {
           auth: {
             username: this.jenkins.user,
@@ -245,7 +244,7 @@ export default {
       return arr;
     },
     load(interval) {
-      axios
+      this.axios
         .get("/jenkinsapi/queue/api/json", {
           auth: {
             username: this.jenkins.user,
@@ -255,9 +254,14 @@ export default {
         .then(resp => {
           var tmp = [];
           for (let item of resp.data.items) {
-            tmp.push(item.task.name);
+            if (item.task.name) {
+              tmp.push(item.task.name);
+            } 
           }
           this.buildQueue = tmp;
+        })
+        .catch(err => {
+          console.log(err);
         });
 
       var names = this.list();
@@ -265,12 +269,13 @@ export default {
       var a = [];
 
       let requests = [];
+
       for (let name of names) {
         if (name.endsWith("rollck")) {
           continue;
         }
         requests.push(
-          axios.get("/jenkinsapi/job/" + name + "/api/json", {
+          this.axios.get("/jenkinsapi/job/" + name + "/api/json", {
             auth: {
               username: this.jenkins.user,
               password: this.jenkins.pwd
@@ -279,40 +284,43 @@ export default {
         );
       }
 
-      let that = this;
-      Promise.all(requests).then(function(values) {
-        for (const value of values) {
-          let info = {};
-          switch (value.data.color) {
-            case "notbuilt":
-              info.color = "info";
-              break;
-            case "red":
-              info.color = "danger";
-              break;
-            case "blue":
-              info.color = "success";
-              break;
-            case "blue_anime":
-              info.color = "";
-              break;
+      Promise.all(requests)
+        .then(values => {
+          for (const value of values) {
+            let info = {};
+            switch (value.data.color) {
+              case "notbuilt":
+                info.color = "info";
+                break;
+              case "red":
+                info.color = "danger";
+                break;
+              case "blue":
+                info.color = "success";
+                break;
+              case "blue_anime":
+                info.color = "";
+                break;
+            }
+            console.log(value.data)
+            // info.color = value.data.color;
+            info.nextBuildNumber = value.data.nextBuildNumber;
+            info.url = value.data.url;
+            info.lastBuild = value.data.lastBuild;
+            info.lastCompletedBuild = value.data.lastCompletedBuild;
+            a[value.data.name] = info;
+            this.$set(this.infos, value.data.name, info);
           }
-          // info.color = value.data.color;
-          info.nextBuildNumber = value.data.nextBuildNumber;
-          info.url = value.data.url;
-          info.lastBuild = value.data.lastBuild;
-          info.lastCompletedBuild = value.data.lastCompletedBuild;
-          a[value.data.name] = info;
-          that.$set(that.infos, value.data.name, info);
-        }
-
-        if (interval && that.refresh > 0) {
-          that.auto = true;
-          setTimeout(function() {
-            that.load(interval);
-          }, that.refresh * 1000);
-        }
-      });
+        })
+        .catch(err => console.log(err))
+        .finally(() => {
+          if (interval && this.refresh > 0) {
+            this.auto = true;
+            setTimeout(() => {
+              this.load(interval);
+            }, this.refresh * 1000);
+          }
+        });
     }
   },
   mounted() {

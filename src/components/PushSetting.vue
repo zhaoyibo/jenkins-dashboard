@@ -51,7 +51,6 @@
 </template>
 
 <script>
-import axios from "axios";
 export default {
   name: "PushSetting",
   data() {
@@ -96,7 +95,7 @@ export default {
         this.$message.error("uid 输入有误");
         return;
       }
-      axios
+      this.axios
         .get(
           "http://testmanager.wb-intra.com/push-manager/setting/user?uid=" +
             this.uid
