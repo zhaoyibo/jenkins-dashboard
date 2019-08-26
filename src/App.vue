@@ -1,19 +1,19 @@
 <template>
   <div id="app">
-    <JenkinsDashboard/>
-    <PushSetting/>
+    <JenkinsDashboard />
+    <!-- <PushSetting/> -->
   </div>
 </template>
 
 <script>
-import JenkinsDashboard from "./components/JenkinsDashboard.vue";
-import PushSetting from "./components/PushSetting.vue";
+import JenkinsDashboard from "./components/JenkinsDashboard1.vue";
+// import PushSetting from "./components/PushSetting.vue";
 
 export default {
   name: "app",
   components: {
-    JenkinsDashboard,
-    PushSetting
+    JenkinsDashboard
+    // PushSetting
   }
 };
 </script>

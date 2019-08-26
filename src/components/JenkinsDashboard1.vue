@@ -1,23 +1,6 @@
 <template>
   <div class="main">
     <el-divider>Jenkins Dashboard</el-divider>
-    <!-- 账号密码 -->
-    <el-row :gutter="12">
-      <el-form :inline="true" label-width="40px" :model="jenkins" size="mini">
-        <el-form-item label="地址">
-          <el-input v-model="jenkins.url"></el-input>
-        </el-form-item>
-        <el-form-item label="账号">
-          <el-input v-model="jenkins.user"></el-input>
-        </el-form-item>
-        <el-form-item label="密码">
-          <el-input type="password" v-model="jenkins.pwd"></el-input>
-        </el-form-item>
-        <el-form-item>
-          <el-button type @click="submit">保存</el-button>
-        </el-form-item>
-      </el-form>
-    </el-row>
     <!-- 搜索&刷新 -->
     <el-row :gutter="12">
       <el-form :inline="true" label-width="80px" :model="jenkins" size="mini">
@@ -105,8 +88,8 @@ export default {
     return {
       jenkins: {
         url: "http://testjenkins.wb-intra.com",
-        user: "",
-        pwd: ""
+        user: "testuser",
+        pwd: "testuser"
       },
       jobs: [],
       infos: {},
@@ -116,14 +99,14 @@ export default {
           value: "0",
           label: "不自动刷新"
         },
-        {
-          value: "1",
-          label: "1s"
-        },
-        {
-          value: "2",
-          label: "2s"
-        },
+        // {
+        //   value: "1",
+        //   label: "1s"
+        // },
+        // {
+        //   value: "2",
+        //   label: "2s"
+        // },
         {
           value: "3",
           label: "3s"
@@ -154,7 +137,7 @@ export default {
     deploy(name) {
       this.axios
         .post(
-          "/jenkinsapi/job/" + name + "/buildWithParameters",
+          this.jenkins.url + "/job/" + name + "/buildWithParameters",
           '{"parameter":[{"name":"branch","value":"test"}]',
           {
             auth: {
@@ -184,7 +167,7 @@ export default {
     },
     search(keyword, cb) {
       this.axios
-        .get("/jenkinsapi/search/suggest?query=" + keyword, {
+        .get(this.jenkins.url + "/search/suggest?query=" + keyword, {
           auth: {
             username: this.jenkins.user,
             password: this.jenkins.pwd
@@ -245,7 +228,7 @@ export default {
     },
     load(interval) {
       this.axios
-        .get("/jenkinsapi/queue/api/json", {
+        .get(this.jenkins.url + "/queue/api/json", {
           auth: {
             username: this.jenkins.user,
             password: this.jenkins.pwd
@@ -275,7 +258,7 @@ export default {
           continue;
         }
         requests.push(
-          this.axios.get("/jenkinsapi/job/" + name + "/api/json", {
+          this.axios.get(this.jenkins.url + "/job/" + name + "/api/json", {
             auth: {
               username: this.jenkins.user,
               password: this.jenkins.pwd
