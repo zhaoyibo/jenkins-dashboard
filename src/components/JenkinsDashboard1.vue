@@ -1,19 +1,30 @@
 <template>
-  <div class="main">
-    <el-divider>Jenkins Dashboard</el-divider>
-    <!-- 搜索&刷新 -->
+  <div class="main" @click="clickAny">
+    <h1>Wanba Jenkins Dashboard</h1>
+
     <el-row :gutter="12">
-      <el-form :inline="true" label-width="80px" :model="jenkins" size="mini">
+      <el-form :inline="true" label-width="100px" :model="jenkins" size="mini">
+        <el-form-item>
+          <el-radio-group v-model="env" @change="handleEnvChange">
+            <el-radio-button v-for="item in envs" :key="item.name" :label="item.name">{{item.name}}</el-radio-button>
+          </el-radio-group>
+        </el-form-item>
         <el-form-item label>
           <el-autocomplete
             class="inline-input"
             v-model="keyword"
             :fetch-suggestions="search"
-            placeholder="搜索 job"
+            placeholder="search"
             :trigger-on-focus="false"
             @select="handleSelect"
           ></el-autocomplete>
         </el-form-item>
+      </el-form>
+    </el-row>
+
+    <!-- 搜索&刷新 -->
+    <el-row :gutter="12">
+      <el-form :inline="true" label-width="80px" :model="jenkins" size="mini">
         <el-form-item>
           <el-radio-group v-model="refresh" @change="handleChange">
             <el-radio-button
@@ -55,7 +66,7 @@
           <div v-if="item.lastBuild">
             <a :href="item.lastBuild.url + 'console'" target="_blank">
               <el-tag :type="item.color">
-                最后一次构建：{{item.lastBuild.number}}
+                last build：{{item.lastBuild.number}}
                 <i
                   v-if="item.lastBuild.number == item.lastCompletedBuild.number"
                   class="el-icon-finished"
@@ -65,7 +76,7 @@
             </a>
           </div>
           <div v-else>
-            <el-tag type="info">最后一次构建：无</el-tag>
+            <el-tag type="info">last build：n/a</el-tag>
           </div>
           <el-button
             type="primary"
@@ -81,23 +92,25 @@
 </template>
 
 <script>
-import { setTimeout } from "timers";
+import { setTimeout, clearTimeout } from "timers";
 export default {
   name: "HelloWorld",
   data() {
     return {
       jenkins: {
-        url: "http://testjenkins.wb-intra.com",
-        user: "testuser",
-        pwd: "testuser"
+        // url: "http://testjenkins.wb-intra.com",
+        url: "/devjenkinsapi",
+        user: "devuser",
+        pwd: "devuser"
       },
+      testEnv: false,
       jobs: [],
       infos: {},
       keyword: "",
       options: [
         {
           value: "0",
-          label: "不自动刷新"
+          label: "manual"
         },
         // {
         //   value: "1",
@@ -107,10 +120,10 @@ export default {
         //   value: "2",
         //   label: "2s"
         // },
-        {
-          value: "3",
-          label: "3s"
-        },
+        // {
+        //   value: "3",
+        //   label: "3s"
+        // },
         {
           value: "5",
           label: "5s"
@@ -130,7 +143,26 @@ export default {
       ],
       refresh: "0",
       auto: false,
-      buildQueue: []
+      buildQueue: [],
+      noOp: null,
+      blacklist: [],
+      envs: [
+        {
+          name: "dev",
+          // url: "/devjenkinsapi",
+          url: "http://testjenkins.wb-intra.com",
+          user: "devuser",
+          pwd: "devuser"
+        },
+        {
+          name: "test",
+          // url: "/testjenkinsapi",
+          url: "http://devjenkins.wb-intra.com",
+          user: "testuser",
+          pwd: "testuser"
+        }
+      ],
+      env: "dev"
     };
   },
   methods: {
@@ -257,13 +289,26 @@ export default {
         if (name.endsWith("rollck")) {
           continue;
         }
+        if (this.blacklist.indexOf(name) > -1) {
+          continue;
+        }
         requests.push(
-          this.axios.get(this.jenkins.url + "/job/" + name + "/api/json", {
-            auth: {
-              username: this.jenkins.user,
-              password: this.jenkins.pwd
-            }
-          })
+          this.axios
+            .get(this.jenkins.url + "/job/" + name + "/api/json", {
+              auth: {
+                username: this.jenkins.user,
+                password: this.jenkins.pwd
+              }
+            })
+            .catch(error => {
+              if (error.response.status == 404) {
+                console.log("not find: " + error.response.config.url);
+                delete this.infos[name];
+              } else {
+                console.log(error.response);
+              }
+              this.blacklist.push(name);
+            })
         );
       }
 
@@ -271,6 +316,9 @@ export default {
         .then(values => {
           for (const value of values) {
             let info = {};
+            if (!value) {
+              continue;
+            }
             switch (value.data.color) {
               case "notbuilt":
                 info.color = "info";
@@ -285,7 +333,7 @@ export default {
                 info.color = "";
                 break;
             }
-            console.log(value.data);
+            // console.log(value.data);
             // info.color = value.data.color;
             info.nextBuildNumber = value.data.nextBuildNumber;
             info.url = value.data.url;
@@ -304,12 +352,30 @@ export default {
             }, this.refresh * 1000);
           }
         });
+    },
+    clickAny() {
+      if (this.noOp) {
+        clearTimeout(this.noOp);
+      }
+      this.noOp = setTimeout(() => {
+        this.refresh = 0;
+        this.auto = false;
+      }, 5 * 60 * 1000);
+    },
+    handleEnvChange(env) {
+      for (var e of this.envs) {
+        if (env == e.name) {
+          this.jenkins = e;
+          this.load(true);
+          break;
+        }
+      }
     }
   },
   mounted() {
-    var str = localStorage.getItem("jenkins");
+    var str = localStorage.getItem("options");
     if (str) {
-      this.jenkins = JSON.parse(str);
+      this.options = JSON.parse(str);
     }
     if (this.jenkins.user && this.jenkins.pwd) {
       this.load(true);
