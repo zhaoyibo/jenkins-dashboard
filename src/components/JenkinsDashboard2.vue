@@ -94,7 +94,7 @@
             size="small"
             @click="deploy(name)"
             style="margin-top: 10px"
-          >build #{{item.nextBuildNumber}}</el-button>
+          >build</el-button>
         </el-card>
       </el-col>
     </el-row>
@@ -361,6 +361,26 @@ export default {
             info.lastCompletedBuild = value.data.lastCompletedBuild;
             a[value.data.name] = info;
             this.$set(this.infos, value.data.name, info);
+
+            this.axios
+              .get(
+                this.jenkins.url +
+                  "/job/" +
+                  value.data.name +
+                  "/wfapi/runs?since=%23" +
+                  value.data.lastBuild.number +
+                  "&fullStages=true&_=" +
+                  Date.now(),
+                {
+                  auth: {
+                    username: this.jenkins.user,
+                    password: this.jenkins.pwd
+                  }
+                }
+              )
+              .then(resp => {
+                console.log(resp);
+              });
           }
         })
         .catch(err => console.log(err))

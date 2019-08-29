@@ -6,7 +6,7 @@
 </template>
 
 <script>
-import JenkinsDashboard from "./components/JenkinsDashboard1.vue";
+import JenkinsDashboard from "./components/JenkinsDashboard2.vue";
 // import PushSetting from "./components/PushSetting.vue";
 
 export default {
