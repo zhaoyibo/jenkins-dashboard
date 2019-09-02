@@ -63,44 +63,44 @@
         >{{ item }}</el-tag>
       </div>
     </el-row>
-
     <!-- build 面板 -->
     <el-row :gutter="12">
-      <el-col v-for="(name, idx) in names" :key="idx" :span="6">
+      <el-col v-for="(item, name) in infos" :key="name" :span="6">
         <el-card shadow="hover">
-          <div v-if="infos[name]" slot="header" class="clearfix">
-            <a :href="infos[name].url" target="_blank">
+          <div slot="header" class="clearfix">
+            <a :href="item.url" target="_blank">
               <span>{{name}}</span>
             </a>
             <i style="float: right; padding: 3px 5px" class="el-icon-close" @click="remove(name)"></i>
           </div>
-          <div v-if="infos[name].lastBuild">
-            <a :href="infos[name].lastBuild.url + 'console'" target="_blank">
-              <el-tag :type="infos[name].color">
-                last build：{{infos[name].lastBuildNum}}
+          <div v-if="item.number">
+            <a :href="item.url +  item.number + '/console'" target="_blank">
+              <!-- <el-tag :type="item.color">
+                last build：{{item.number}}
                 <i
-                  v-if="infos[name].status == 'IN_PROGRESS'"
+                  v-if="item.result == 'IN_PROGRESS'"
                   class="el-icon-loading"
                 ></i>
-                <i v-else class="el-icon-finished"></i>
-              </el-tag>
+                <i v-else-if="item.result == 'SUCCESS'" class="el-icon-finished"></i>
+                <i v-else class="el-icon-close"></i>
+                <br />
+                {{item.timestamp}}
+              </el-tag>-->
+              <el-button plain :type="item.color">
+                last build：#{{item.number}}
+                <i v-if="item.building" class="el-icon-loading"></i>
+                <i v-else-if="item.result == 'SUCCESS'" class="el-icon-finished"></i>
+                <i v-else class="el-icon-close"></i>
+                <br />
+                <br />
+                <span style="font-size:12px">{{item.timestamp}}</span>
+              </el-button>
             </a>
           </div>
           <div v-else>
             <el-tag type="info">last build：n/a</el-tag>
           </div>
-          <el-button
-            type="primary"
-            plain
-            size="small"
-            @click="deploy(name)"
-            style="margin-top: 10px"
-          >build</el-button>
-
-          <div v-if="!infos[name]" slot="header" class="clearfix">
-            <span>{{name}}</span>
-            <i style="float: right; padding: 3px 5px" class="el-icon-close" @click="remove(name)"></i>
-          </div>
+          <el-button type plain size="small" @click="deploy(name)" style="margin-top: 10px">build</el-button>
         </el-card>
       </el-col>
     </el-row>
@@ -173,8 +173,7 @@ export default {
         }
       ],
       env: "test",
-      fullscreenLoading: false,
-      names: []
+      fullscreenLoading: false
     };
   },
   methods: {
@@ -265,158 +264,11 @@ export default {
     },
     list() {
       var arr = [];
-      var str = localStorage.getItem("jobs");
-      if (str) {
-        arr = JSON.parse(str);
-        this.names = arr;
+      var names = localStorage.getItem("jobs");
+      if (names) {
+        arr = JSON.parse(names);
       }
       return arr;
-    },
-    init() {
-      var names = this.list();
-      for (let name of names) {
-        if (name.endsWith("rollck")) {
-          continue;
-        }
-        if (this.blacklist.indexOf(name) > -1) {
-          continue;
-        }
-
-        this.axios
-          .get(
-            this.jenkins.url +
-              "/job/" +
-              name +
-              "/api/json" +
-              "?tree=builds[number,timestamp,result]{0,1}",
-            {
-              auth: {
-                username: this.jenkins.user,
-                password: this.jenkins.pwd
-              }
-            }
-          )
-          .then(value => {
-            let info = {};
-            switch (value.data.color) {
-              case "notbuilt":
-                info.color = "info";
-                break;
-              case "red":
-                info.color = "danger";
-                break;
-              case "blue":
-                info.color = "success";
-                break;
-              case "blue_anime":
-                info.color = "";
-                break;
-            }
-
-            info.status = "";
-            info.lastBuildNum = 0;
-
-            info.nextBuildNumber = value.data.nextBuildNumber;
-            info.url = value.data.url;
-            info.lastBuild = value.data.lastBuild;
-            info.lastCompletedBuild = value.data.lastCompletedBuild;
-            this.$set(this.infos, value.data.name, info);
-
-            this.shuaxin(name);
-          })
-          .catch(error => {
-            if (error.response && error.response.status == 404) {
-              // console.log("not find: " + error.response.config.url);
-              this.$notify({
-                title: name,
-                message: "Not Find",
-                type: "warning"
-              });
-            } else {
-              // console.log(error);
-              this.$notify.error({
-                title: name,
-                message: error
-              });
-            }
-
-            this.blacklist.push(name);
-          });
-      }
-    },
-    shuaxin(name) {
-      if (name.endsWith("rollck")) {
-        return;
-      }
-      if (this.blacklist.indexOf(name) > -1) {
-        return;
-      }
-
-      this.axios
-        .get(
-          this.jenkins.url +
-            "/job/" +
-            name +
-            "/wfapi/runs?since=%23" +
-            this.infos[name].lastBuild.number +
-            "&fullStages=false&_=" +
-            Date.now(),
-          {
-            auth: {
-              username: this.jenkins.user,
-              password: this.jenkins.pwd
-            }
-          }
-        )
-        .then(value => {
-          // console.log(value);
-          if (value.data) {
-            // if (value.data.length == 1) {
-            this.infos[name].startTimeMillis = value.data[0].startTimeMillis;
-            this.infos[name].lastBuildNum = parseInt(value.data[0].id);
-            this.infos[name].color = this.getColor(value.data[0].status);
-            // } else {
-            //   for (let d of value.data) {
-            //     if (d.status != "IN_PROGRESS") {
-            //       this.infos[name].lastBuildNum = parseInt(d.id);
-            //       break;
-            //     }
-            //   }
-            //   this.infos[name].status = value.data[0].status;
-            // status: IN_PROGRESS  SUCCESS   ABORTED
-            // }
-            // setTimeout(() => {
-            //   this.shuaxin(name);
-            // }, 2 * 1000);
-          }
-        })
-        .catch(() => {
-          this.blacklist.push(name);
-
-          // if (error.response && error.response.status == 404) {
-          //   // console.log("not find: " + error.response.config.url);
-          //   this.$notify({
-          //     title: name,
-          //     message: "Not Find",
-          //     type: "warning"
-          //   });
-          // } else {
-          //   // console.log(error);
-          //   this.$notify.error({
-          //     title: name,
-          //     message: error
-          //   });
-          // }
-
-          // this.blacklist.push(name);
-        });
-    },
-    getColor(status) {
-      switch (status) {
-        case "ABORTED":
-          return "info";
-      }
-      return "success";
     },
     load(interval) {
       this.axios
@@ -457,12 +309,21 @@ export default {
         }
         requests.push(
           this.axios
-            .get(this.jenkins.url + "/job/" + name + "/api/json", {
-              auth: {
-                username: this.jenkins.user,
-                password: this.jenkins.pwd
+            .get(
+              this.jenkins.url +
+                "/job/" +
+                name +
+                "/api/json?tree=" +
+                encodeURI(
+                  "name,url,builds[number,timestamp,result,building]{0,1}"
+                ),
+              {
+                auth: {
+                  username: this.jenkins.user,
+                  password: this.jenkins.pwd
+                }
               }
-            })
+            )
             .catch(error => {
               if (error.response && error.response.status == 404) {
                 // console.log("not find: " + error.response.config.url);
@@ -487,51 +348,35 @@ export default {
       Promise.all(requests)
         .then(values => {
           for (const value of values) {
-            let info = {};
             if (!value) {
               continue;
             }
-            switch (value.data.color) {
-              case "notbuilt":
-                info.color = "info";
-                break;
-              case "red":
-                info.color = "danger";
-                break;
-              case "blue":
+            console.log(value.data);
+
+            let lastBuild = value.data.builds[0];
+            let info = {
+              color: "primary",
+              url: value.data.url,
+              number: lastBuild.number,
+              result: lastBuild.result,
+              building: lastBuild.building,
+              timestamp: this.dataFormat(new Date(lastBuild.timestamp))
+            };
+
+            switch (lastBuild.result) {
+              case "SUCCESS":
                 info.color = "success";
                 break;
-              case "blue_anime":
-                info.color = "";
+              case "ABORTED":
+                info.color = "info";
                 break;
-            }
-            // console.log(value.data);
-            // info.color = value.data.color;
-            info.nextBuildNumber = value.data.nextBuildNumber;
-            info.url = value.data.url;
-            info.lastBuild = value.data.lastBuild;
-            info.lastCompletedBuild = value.data.lastCompletedBuild;
-            this.$set(this.infos, value.data.name, info);
-
-            this.axios
-              .get(
-                this.jenkins.url +
-                  "/job/" +
-                  value.data.name +
-                  "/wfapi/runs?since=%23" +
-                  value.data.lastBuild.number +
-                  "&fullStages=true&_=" +
-                  Date.now(),
-                {
-                  auth: {
-                    username: this.jenkins.user,
-                    password: this.jenkins.pwd
-                  }
+              default:
+                if (!lastBuild.building) {
+                  info.color = "danger";
                 }
-              )
-              .then(resp => {
-                console.log(resp);
-              });
+            }
+
+            this.$set(this.infos, value.data.name, info);
           }
         })
         .catch(err => console.log(err))
@@ -549,20 +394,24 @@ export default {
       if (this.noOp) {
         clearTimeout(this.noOp);
       }
-      this.noOp = setTimeout(() => {
-        this.refresh = 0;
-        this.auto = false;
-      }, 5 * 60 * 1000);
+      var neverStop = localStorage.getItem("neverStop");
+      if (!neverStop) {
+        this.noOp = setTimeout(() => {
+          this.refresh = 0;
+          this.auto = false;
+        }, 5 * 60 * 1000);
+      }
     },
     handleEnvChange(env) {
-      // this.fullscreenLoading = true;
+      this.fullscreenLoading = true;
       this.blacklist = [];
       this.infos = {};
       for (var e of this.envs) {
         if (env == e.name) {
           this.jenkins = e;
-          // this.load(true);
-          this.init();
+          // this.jenkins.user = e.user;
+          // this.jenkins.pwd = e.pwd;
+          this.load(true);
           break;
         }
       }
@@ -577,6 +426,22 @@ export default {
       setTimeout(() => {
         loading.close();
       }, 2000);
+    },
+    dataFormat(time) {
+      return `${time.getFullYear()}-${
+        time.getMonth() + 1 >= 10
+          ? time.getMonth() + 1
+          : "0" + (time.getMonth() + 1)
+      }-${time.getDate() >= 10 ? time.getDate() : "0" + time.getDate()}
+                     ${
+                       time.getHours() >= 10
+                         ? time.getHours()
+                         : "0" + time.getHours()
+                     }:${
+        time.getMinutes() >= 10 ? time.getMinutes() : "0" + time.getMinutes()
+      }:${
+        time.getSeconds() >= 10 ? time.getSeconds() : "0" + time.getSeconds()
+      }`;
     }
   },
   mounted() {
