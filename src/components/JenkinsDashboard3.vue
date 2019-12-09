@@ -353,7 +353,7 @@ export default {
             }
             console.log(value.data);
 
-            let lastBuild = value.data.builds[0];
+            let lastBuild = value.data.builds[0] || {};
             let info = {
               color: "primary",
               url: value.data.url,
